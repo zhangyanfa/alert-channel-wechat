@@ -1,0 +1,20 @@
+{
+    "name": "alertchannel-wechat",
+    "version": "1.0.0",
+    "description": "Instana alert channel wechat",
+    "main": "app.js",
+    "scripts": {
+        "start": "node app.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": ""
+    },
+    "license": "Apache-2.0",
+    "dependencies": {
+        "body-parser": "^1.19.0",
+        "compression": "^1.7.4",
+        "cookie-parser": "^1.4.4",
+        "express": "^4.16.4"
+    }
+}
