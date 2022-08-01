@@ -40,13 +40,13 @@ app.post('/alert', function (req, res) {
     if( alert == null || alert == "" ) {
         res.send("alert fail!");
     }
-    console.log(alert.issus);
-    console.log(JSON.stringify(alert.issus));
+    console.log(alert.issue);
+    console.log(JSON.stringify(alert.issue));
 
     if( alert.issue.state == "OPEN" ) {
 
     
-        mongo.addEvent(alert.issus);
+        mongo.addEvent(alert.issue);
 
         /*var alert = {
             "msgtype": "text",
