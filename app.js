@@ -2,8 +2,9 @@ const express = require('express')
 //const compression = require('compression')
 const request = require('request')
 var bodyParser = require('body-parser')
-
 const app = express();
+
+var mongo = require('./mongo');
 
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json());
@@ -11,23 +12,70 @@ app.use(bodyParser.json());
 //app.use(compression())
 ////app.use(express.static('./static'))
 
+const hostUrl = "http://localhost:3000"
+
 const botUrl = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=";
 const botkey = "b27bdcd6-b0d2-4c4c-9ac8-2fee88634441";
 
+
+app.get('/detail', function(req, res) {
+    var eventId = req.query.eventid;
+    console.log(eventId);
+
+    mongo.claimEvent(eventId);
+
+    mongo.getEvent(eventId, function(eventObj) {
+        res.writeHead(302, {
+            location: eventObj.link,
+        });
+        res.end();
+    });
+    
+});
+
+
 app.post('/alert', function (req, res) {
-    var issue = req.body;
+    var alert = req.body;
 
-    console.log(issue);
-    console.log(JSON.stringify(issue));
+    if( alert == null || alert == "" ) {
+        res.send("alert fail!");
+    }
+    console.log(alert.issus);
+    console.log(JSON.stringify(alert.issus));
 
-    var alert = {
-        "msgtype": "text",
-        "text": {
-            "content": JSON.stringify(issue)
+    if( alert.issue.state == "OPEN" ) {
+
+    
+        mongo.addEvent(alert.issus);
+
+        /*var alert = {
+            "msgtype": "text",
+            "text": {
+                "content": JSON.stringify(issue)
+            }
+        }*/
+        var msg = {
+            "msgtype": "markdown",
+            "markdown": {
+                "content": "<font color=\"warning\">"+alert.issue.text+"</font>\n" +
+                        "[告警详情]("+hostUrl+"/detail?eventid="+alert.issue.id+")",
+            }
+        }
+
+    } else if( alert.issue.state == "CLOSED" ) {
+
+        mongo.closeEvent(alert.issus);
+
+        var msg = {
+            "msgtype": "markdown",
+            "markdown": {
+                "content": "<font color=\"info\">告警已关闭："+alert.issue.text+"</font>\n" +
+                        "[告警详情]("+hostUrl+"/detail?eventid="+alert.issue.id+")",
+            }
         }
     }
 
-    /*request({
+    request({
         url: botUrl + botkey,
         method: "POST",
         headers: {
@@ -38,7 +86,9 @@ app.post('/alert', function (req, res) {
         if (!error && response.statusCode == 200) {
             console.log(body) // 请求成功的处理逻辑
         }
-    }); */
+    });
+
+    
     res.send("alert ok!");
 });
 
@@ -52,6 +102,7 @@ app.get("/test",function(req,res){
           start: 1659333895188,
           text: 'Integration test',
           description: 'It works!',
+          severity: 5,
           link: 'https://www.ibm.com/docs/obi/current?topic=alerting-webhooks',
           customZone: 'not available',
           availabilityZone: 'not available',
@@ -67,10 +118,17 @@ app.get("/test",function(req,res){
       }
     
     console.log(JSON.stringify(alert));
-    var msg = {
+    /*var msg = {
         "msgtype": "text",
         "text": {
             "content": JSON.stringify(alert)
+        }
+    }*/
+    var msg = {
+        "msgtype": "markdown",
+        "markdown": {
+            "content": "<font color=\"warning\">"+alert.issue.text+"</font>\n" +
+                       "[告警详情]("+hostUrl+"/detail?eventid="+alert.issue.id+")",
         }
     }
 
@@ -84,6 +142,7 @@ app.get("/test",function(req,res){
     }, function(error, response, body) {
         if (!error && response.statusCode == 200) {
             console.log(body) // 请求成功的处理逻辑
+            res.send("alert ok!");
         }
     }); 
 
