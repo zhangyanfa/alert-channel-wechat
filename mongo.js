@@ -90,5 +90,6 @@ var issue = {
 //getEvent("mTnCSR1gQsSiEQmB0kNP4Q");
 
 exports.addEvent = addEvent;
+exports.closeEvent = closeEvent;
 exports.claimEvent = claimEvent;
 exports.getEvent = getEvent;

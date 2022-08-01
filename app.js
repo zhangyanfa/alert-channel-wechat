@@ -43,18 +43,15 @@ app.post('/alert', function (req, res) {
     console.log(alert.issue);
     console.log(JSON.stringify(alert.issue));
 
+
+    var msg = null;
+
     if( alert.issue.state == "OPEN" ) {
 
     
         mongo.addEvent(alert.issue);
 
-        /*var alert = {
-            "msgtype": "text",
-            "text": {
-                "content": JSON.stringify(issue)
-            }
-        }*/
-        var msg = {
+        msg = {
             "msgtype": "markdown",
             "markdown": {
                 "content": "<font color=\"warning\">"+alert.issue.text+"</font>\n" +
@@ -66,7 +63,7 @@ app.post('/alert', function (req, res) {
 
         mongo.closeEvent(alert.issus);
 
-        var msg = {
+        msg = {
             "msgtype": "markdown",
             "markdown": {
                 "content": "<font color=\"info\">告警已关闭："+alert.issue.text+"</font>\n" +
