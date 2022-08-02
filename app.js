@@ -43,19 +43,27 @@ app.post('/alert', function (req, res) {
     console.log(alert.issue);
     console.log(JSON.stringify(alert.issue));
 
+    var color = "";
+    var msgtype = "";
+    if( 5 == alert.issue.severity ) {
+        color = "warning";
+        msgtype = "警告:";
+    } else if( 10 == alert.issue.severity ) {
+        color = "warning";
+        msgtype = "严重:";
+    } else if( -1 == alert.issue.severity ) {
+        color = "";
+    }
+
 
     var msg = null;
 
     if( alert.issue.state == "OPEN" ) {
-
-    
         mongo.addEvent(alert.issue);
-
         msg = {
             "msgtype": "markdown",
             "markdown": {
-                "content": "<font color=\"warning\">"+alert.issue.text+"</font>\n" +
-                        "[告警详情]("+hostUrl+"/detail?eventid="+alert.issue.id+")",
+                "content": "<font color=\""+color+"\">" + msgtype + alert.issue.text + "</font> [告警详情]("+hostUrl+"/detail?eventid="+alert.issue.id+")"
             }
         }
 
@@ -66,8 +74,7 @@ app.post('/alert', function (req, res) {
         msg = {
             "msgtype": "markdown",
             "markdown": {
-                "content": "<font color=\"info\">告警已关闭："+alert.issue.text+"</font>\n" +
-                        "[告警详情]("+hostUrl+"/detail?eventid="+alert.issue.id+")",
+                "content": "<font color=\"info\">告警关闭:"+alert.issue.text+" 持续时间:"+alert.issue.end+"</font>[告警详情]("+hostUrl+"/detail?eventid="+alert.issue.id+")\n"
             }
         }
     }
@@ -124,8 +131,7 @@ app.get("/test",function(req,res){
     var msg = {
         "msgtype": "markdown",
         "markdown": {
-            "content": "<font color=\"warning\">"+alert.issue.text+"</font>\n" +
-                       "[告警详情]("+hostUrl+"/detail?eventid="+alert.issue.id+")",
+            "content": "<font color=\"warning\">"+alert.issue.text+"</font> [告警详情]("+hostUrl+"/detail?eventid="+alert.issue.id+")",
         }
     }
 
