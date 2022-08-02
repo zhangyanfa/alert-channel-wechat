@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 const hostUrl = "http://localhost:3000"
 
 const botUrl = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=";
-const botkey = "b27bdcd6-b0d2-4c4c-9ac8-2fee88634441";
+//const botkey = "b27bdcd6-b0d2-4c4c-9ac8-2fee88634441";
 
 
 app.get('/detail', function(req, res) {
@@ -34,8 +34,11 @@ app.get('/detail', function(req, res) {
 });
 
 
-app.post('/alert', function (req, res) {
+app.post('/alert/:botkey', function (req, res) {
     var alert = req.body;
+
+    var botkey = req.params["botkey"];
+    console.log("====botkey====" + botkey);
 
     if( alert == null || alert == "" ) {
         res.send("alert fail!");
@@ -63,34 +66,55 @@ app.post('/alert', function (req, res) {
         msg = {
             "msgtype": "markdown",
             "markdown": {
-                "content": "<font color=\""+color+"\">" + msgtype + alert.issue.text + "</font> [告警详情]("+hostUrl+"/detail?eventid="+alert.issue.id+")"
+                "content": "<font color=\""+color+"\">" + msgtype + alert.issue.text 
+                         + "</font> [告警详情]("+hostUrl+"/detail?eventid="+alert.issue.id+")"
             }
         }
+
+        request({
+            url: botUrl + botkey,
+            method: "POST",
+            headers: {
+                "content-type": "application/json",
+            },
+            body: JSON.stringify(alert)
+        }, function(error, response, body) {
+            if (!error && response.statusCode == 200) {
+                console.log(body) // 请求成功的处理逻辑
+            }
+        });
 
     } else if( alert.issue.state == "CLOSED" ) {
 
-        mongo.closeEvent(alert.issus);
+        mongo.closeEvent(alert.issue);
 
-        msg = {
-            "msgtype": "markdown",
-            "markdown": {
-                "content": "<font color=\"info\">告警关闭:"+alert.issue.text+" 持续时间:"+alert.issue.end+"</font>[告警详情]("+hostUrl+"/detail?eventid="+alert.issue.id+")\n"
+        mongo.getEvent(alert.issue.id, function(eventObj) {
+            var during = alert.issue.end - eventObj.start
+            msg = {
+                "msgtype": "markdown",
+                "markdown": {
+                    "content": "<font color=\"info\">告警关闭:"+alert.issue.text+" 持续时间:" + during
+                             + "</font> [告警详情]("+hostUrl+"/detail?eventid="+alert.issue.id+")"
+                }
             }
-        }
+            request({
+                url: botUrl + botkey,
+                method: "POST",
+                headers: {
+                    "content-type": "application/json",
+                },
+                body: JSON.stringify(alert)
+            }, function(error, response, body) {
+                if (!error && response.statusCode == 200) {
+                    console.log(body) // 请求成功的处理逻辑
+                }
+            });
+        })
+
+        
     }
 
-    request({
-        url: botUrl + botkey,
-        method: "POST",
-        headers: {
-            "content-type": "application/json",
-        },
-        body: JSON.stringify(alert)
-    }, function(error, response, body) {
-        if (!error && response.statusCode == 200) {
-            console.log(body) // 请求成功的处理逻辑
-        }
-    });
+    
 
     
     res.send("alert ok!");
