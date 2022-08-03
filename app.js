@@ -14,9 +14,9 @@ app.use(bodyParser.json());
 
 const hostUrl = "http://localhost:3000"
 
-const botUrl = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=";
+var botUrl = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=";
 //const botkey = "b27bdcd6-b0d2-4c4c-9ac8-2fee88634441";
-
+var botkey="";
 
 app.get('/detail', function(req, res) {
     var eventId = req.query.eventid;
@@ -37,7 +37,7 @@ app.get('/detail', function(req, res) {
 app.post('/alert/:botkey', function (req, res) {
     var alert = req.body;
 
-    var botkey = req.params["botkey"];
+    botkey = req.params["botkey"];
     console.log("====botkey====" + botkey);
 
     if( alert == null || alert == "" ) {
@@ -47,13 +47,13 @@ app.post('/alert/:botkey', function (req, res) {
     console.log(JSON.stringify(alert.issue));
 
     var color = "";
-    var msgtype = "";
+    var type = "";
     if( 5 == alert.issue.severity ) {
         color = "warning";
-        msgtype = "警告:";
+        type = "警告:";
     } else if( 10 == alert.issue.severity ) {
         color = "warning";
-        msgtype = "严重:";
+        type = "严重:";
     } else if( -1 == alert.issue.severity ) {
         color = "";
     }
@@ -66,18 +66,17 @@ app.post('/alert/:botkey', function (req, res) {
         msg = {
             "msgtype": "markdown",
             "markdown": {
-                "content": "<font color=\""+color+"\">" + msgtype + alert.issue.text 
-                         + "</font> [告警详情]("+hostUrl+"/detail?eventid="+alert.issue.id+")"
+                "content": "<font color=\""+color+"\">" + type + alert.issue.text + "</font> [告警详情]("+hostUrl+"/detail?eventid="+alert.issue.id+")"
             }
         }
-
+        console.log(msg)
         request({
             url: botUrl + botkey,
             method: "POST",
             headers: {
                 "content-type": "application/json",
             },
-            body: JSON.stringify(alert)
+            body: JSON.stringify(msg)
         }, function(error, response, body) {
             if (!error && response.statusCode == 200) {
                 console.log(body) // 请求成功的处理逻辑
@@ -89,21 +88,25 @@ app.post('/alert/:botkey', function (req, res) {
         mongo.closeEvent(alert.issue);
 
         mongo.getEvent(alert.issue.id, function(eventObj) {
-            var during = alert.issue.end - eventObj.start
+            var during = (alert.issue.end - eventObj.start)/60
+
+            
+
             msg = {
                 "msgtype": "markdown",
                 "markdown": {
-                    "content": "<font color=\"info\">告警关闭:"+alert.issue.text+" 持续时间:" + during
-                             + "</font> [告警详情]("+hostUrl+"/detail?eventid="+alert.issue.id+")"
+                    "content": "<font color=\"info\">关闭:"+alert.issue.text+" 持续时间:" + during
+                             + "分钟</font> [告警详情]("+hostUrl+"/detail?eventid="+alert.issue.id+")"
                 }
             }
+            console.log(msg);
             request({
                 url: botUrl + botkey,
                 method: "POST",
                 headers: {
                     "content-type": "application/json",
                 },
-                body: JSON.stringify(alert)
+                body: JSON.stringify(msg)
             }, function(error, response, body) {
                 if (!error && response.statusCode == 200) {
                     console.log(body) // 请求成功的处理逻辑
@@ -125,24 +128,25 @@ app.get("/test",function(req,res){
 
     var alert = {
         issue: {
-          id: 'S9msCx-eT0yItxxB5KPhYg',
-          type: 'change',
-          start: 1659333895188,
-          text: 'Integration test',
-          description: 'It works!',
-          severity: 5,
-          link: 'https://www.ibm.com/docs/obi/current?topic=alerting-webhooks',
-          customZone: 'not available',
-          availabilityZone: 'not available',
-          zone: 'not available',
-          fqdn: 'not available',
-          entity: 'not available',
-          entityLabel: 'not available',
-          tags: 'not available',
-          container: 'not available',
-          service: 'not available',
-          containerNames: []
-        }
+            id: '3R_L-38cSVabLeRR2hcmhg',
+            type: 'incident',
+            state: 'OPEN',
+            start: 1659451590000,
+            severity: 5,
+            text: 'CPU工作负载太高',
+            suggestion: 'CPU工作负载太高',
+            link: 'https://9.46.76.13/#/events;eventId=3R_L-38cSVabLeRR2hcmhg?&timeline.ws=600000&timeline.to=1659451890000&timeline.fm=1659451590000&incidentId=3R_L-38cSVabLeRR2hcmhg&incidentTo=1659451595000',
+            customZone: 'not available',
+            availabilityZone: 'not available',
+            zone: 'not available',
+            fqdn: 'itzvm-310001k9hr-ec9o3jfy-vm.fyre.ibm.com',
+            entity: 'Host',
+            entityLabel: 'itzvm-310001k9hr-ec9o3jfy-vm.fyre.ibm.com',
+            tags: '',
+            container: 'not available',
+            service: 'not available',
+            containerNames: []
+          }
       }
     
     console.log(JSON.stringify(alert));
@@ -152,10 +156,12 @@ app.get("/test",function(req,res){
             "content": JSON.stringify(alert)
         }
     }*/
-    var msg = {
+    var during = 32232;
+    msg = {
         "msgtype": "markdown",
         "markdown": {
-            "content": "<font color=\"warning\">"+alert.issue.text+"</font> [告警详情]("+hostUrl+"/detail?eventid="+alert.issue.id+")",
+            "content": "<font color=\"info\">告警关闭:"+alert.issue.text+" 持续时间:" + during
+                     + "</font> [告警详情]("+hostUrl+"/detail?eventid="+alert.issue.id+")"
         }
     }
 
